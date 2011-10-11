@@ -1,4 +1,9 @@
 {% extends '../base.html' %}
 {% block page %}
   <p>home</p>
+  {% for article in articles %}
+    <h1><a href="{{ article.url }}">{{ article.meta.title }}</a></h1>
+    {{ article.summary }}
+    <a href="{{ article.url }}">Read more &rarr;</a>
+  {% endfor %}
 {% endblock %}

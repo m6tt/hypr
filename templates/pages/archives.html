@@ -2,4 +2,8 @@
 {% block page %}
   <p>archives</p>
   <p>{% if year %}<a href="archives/{{ year }}">{{ year }}</a>{% if month %}/<a href="archives/{{ year }}/{{ month }}">{{ month }}</a>{% if day %}/<a href="archives/{{ year }}/{{ month }}/{{ day }}">{{ day }}</a>{% endif %}{% endif %}{% endif %}</p>
+  {% for article in articles %}
+    <h1>{{ article.meta.title }}</h1>
+    {{ article.summary }}
+  {% endfor %}
 {% endblock %}

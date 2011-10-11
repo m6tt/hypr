@@ -1,4 +1,5 @@
 {% extends '../base.html' %}
 {% block page %}
-  {{article}}
+  <h1>{{ article.meta.title }}</h1>
+  {{ article.body }}
 {% endblock %}
