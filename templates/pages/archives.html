@@ -1,0 +1,5 @@
+{% extends '../base.html' %}
+{% block page %}
+  <p>archives</p>
+  <p>{% if year %}<a href="archives/{{ year }}">{{ year }}</a>{% if month %}/<a href="archives/{{ year }}/{{ month }}">{{ month }}</a>{% if day %}/<a href="archives/{{ year }}/{{ month }}/{{ day }}">{{ day }}</a>{% endif %}{% endif %}{% endif %}</p>
+{% endblock %}
