@@ -1,5 +1,4 @@
-**Ripl**
-*A micro blogging framework for appengine*
---
+Ripl
+=============
 
-Work in progress
+A micro blogging framework for appengine
