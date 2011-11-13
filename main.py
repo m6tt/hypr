@@ -42,7 +42,7 @@ class Article:
     article = memcache.get(self.id, 'article_')
     if article is None:
       try:
-        static_article_path = path('articles/'+self.id+config.article_file_type)
+        static_article_path = path(config.articles_dir+self.id+config.article_file_type)
         article = file(static_article_path, 'rb').read()
         memcache.set(self.id, article, config.cache_time, 0, 'article_')
       except IOError: return
@@ -65,7 +65,7 @@ class Archives:
     archives = memcache.get('archives_'+filter+"_"+str(index_from)+"_"+str(index_to))
     if archives == None:
       archives    = []
-      article_dir = path('articles/')
+      article_dir = path(config.articles_dir)
       for root, dirs, files in os.walk(article_dir):
         count = 0
         for name in files:
@@ -88,7 +88,7 @@ class Index(webapp.RequestHandler):
   def get(self):
     articles = Articles().all()
     template_vars = { 'articles' : articles }
-    self.response.out.write(template.render(path('templates/pages/index.html'), template_vars))
+    self.response.out.write(template.render(path(config.templates_dir+'pages/index.html'), template_vars))
 
 class ViewArticle(webapp.RequestHandler):
   def get(self, year, month, day, title):
@@ -96,9 +96,9 @@ class ViewArticle(webapp.RequestHandler):
     article       = Article(article_id)
     if article.raw is not None:
       template_vars = { 'article' : article }
-      self.response.out.write(template.render(path('templates/pages/article.html'), template_vars))
+      self.response.out.write(template.render(path(config.templates_dir+'pages/article.html'), template_vars))
     else:
-      self.response.out.write(template.render(path('templates/pages/404.html'), {}))
+      self.response.out.write(template.render(path(config.templates_dir+'pages/404.html'), {}))
 
 class ViewArchives(webapp.RequestHandler):
   def get(self, year=None, month=None, day=None):
@@ -117,12 +117,12 @@ class ViewArchives(webapp.RequestHandler):
       'day'       : day,
       'archives'  : archives
     }
-    self.response.out.write(template.render(path('templates/pages/archives.html'), template_vars))
+    self.response.out.write(template.render(path(config.templates_dir+'pages/archives.html'), template_vars))
 
 class ViewTag(webapp.RequestHandler):
   def get(self, tag):
     template_vars = { 'tag' : tag }
-    self.response.out.write(template.render(path('templates/pages/tag.html'), template_vars))
+    self.response.out.write(template.render(path(config.templates_dir+'pages/tag.html'), template_vars))
 
 class PageHandler(webapp.RequestHandler):
   def get(self, page):
@@ -135,12 +135,12 @@ class PageHandler(webapp.RequestHandler):
         'site_url'    : config.site_url,
         'articles'    : Articles().all() 
       }
-      self.response.out.write(template.render(path('templates/'+page+file_type), template_vars))
+      self.response.out.write(template.render(path(config.templates_dir+page+file_type), template_vars))
     else:
       try:
-        self.response.out.write(template.render(path('templates/pages/'+page+'.html'), {}))
+        self.response.out.write(template.render(path(config.templates_dir+'pages/'+page+'.html'), {}))
       except TemplateDoesNotExist:
-        self.response.out.write(template.render(path('templates/pages/404.html'), {}))
+        self.response.out.write(template.render(path(config.templates_dir+'pages/404.html'), {}))
 
 def path(path):
   return os.path.join(os.path.dirname(__file__), path)
