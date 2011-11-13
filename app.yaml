@@ -1,59 +1,59 @@
-application: ripl
+application: hypr
 version: 1
 runtime: python
 api_version: 1
 
 handlers:  
 - url: /favicon\.ico
-  static_files: static/img/favicon.ico
-  upload: static/img/favicon\.ico
+  static_files: site/static/img/favicon.ico
+  upload: site/static/img/favicon\.ico
 
 - url: /apple-touch-icon\.png
-  static_files: static/img/apple-touch-icon.png
-  upload: static/img/apple-touch-icon\.png
+  static_files: site/static/img/apple-touch-icon.png
+  upload: site/static/img/apple-touch-icon\.png
 
 - url: /apple-touch-icon-precomposed\.png
-  static_files: static/img/apple-touch-icon-precomposed.png
-  upload: static/img/apple-touch-icon-precomposed\.png
+  static_files: site/static/img/apple-touch-icon-precomposed.png
+  upload: site/static/img/apple-touch-icon-precomposed\.png
 
 - url: /apple-touch-icon-57x57-precomposed\.png
-  static_files: static/img/apple-touch-icon-57x57-precomposed.png
-  upload: static/img/apple-touch-icon-57x57-precomposed\.png
+  static_files: site/static/img/apple-touch-icon-57x57-precomposed.png
+  upload: site/static/img/apple-touch-icon-57x57-precomposed\.png
 
 - url: /apple-touch-icon-72x72-precomposed\.png
-  static_files: static/img/apple-touch-icon-72x72-precomposed.png
-  upload: static/img/apple-touch-icon-72x72-precomposed\.png
+  static_files: site/static/img/apple-touch-icon-72x72-precomposed.png
+  upload: site/static/img/apple-touch-icon-72x72-precomposed\.png
 
 - url: /apple-touch-icon-114x114-precomposed\.png
-  static_files: static/img/apple-touch-icon-114x114-precomposed.png
-  upload: static/img/apple-touch-icon-114x114-precomposed\.png
+  static_files: site/static/img/apple-touch-icon-114x114-precomposed.png
+  upload: site/static/img/apple-touch-icon-114x114-precomposed\.png
 
 - url: /robots\.txt
-  static_files: static/robots.txt
-  upload: static/robots\.txt
+  static_files: site/static/robots.txt
+  upload: site/static/robots\.txt
 
 - url: /crossdomain\.xml
-  static_files: static/crossdomain.xml
-  upload: static/crossdomain\.xml
+  static_files: site/static/crossdomain.xml
+  upload: site/static/crossdomain\.xml
 
 - url: /css
-  static_dir: static/css
+  static_dir: site/static/css
 
 - url: /less
-  static_dir: static/less
+  static_dir: site/static/less
 
 - url: /js
-  static_dir: static/js
+  static_dir: site/static/js
 
 - url: /img
-  static_dir: static/img
+  static_dir: site/static/img
 
 - url: /downloads
-  static_dir: static/downloads
+  static_dir: site/static/downloads
 
 - url: /admin/.*
-  script: main.py
+  script: hypr.py
   login: admin
 
 - url: .*
-  script: main.py
+  script: hypr.py

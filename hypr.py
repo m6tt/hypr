@@ -119,11 +119,6 @@ class ViewArchives(webapp.RequestHandler):
     }
     self.response.out.write(template.render(path(config.templates_dir+'pages/archives.html'), template_vars))
 
-class ViewTag(webapp.RequestHandler):
-  def get(self, tag):
-    template_vars = { 'tag' : tag }
-    self.response.out.write(template.render(path(config.templates_dir+'pages/tag.html'), template_vars))
-
 class PageHandler(webapp.RequestHandler):
   def get(self, page):
     page = cgi.escape(page.replace('/', ''))
