@@ -51,7 +51,7 @@ handlers:
 - url: /downloads
   static_dir: static/downloads
 
-- url: admin/.*
+- url: /admin/.*
   script: main.py
   login: admin
 
