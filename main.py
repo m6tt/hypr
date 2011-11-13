@@ -19,133 +19,150 @@ import re
 import cgi
 import yaml
 import markdown
+import config
 from google.appengine.ext import webapp
 from google.appengine.api import memcache
 from google.appengine.ext.webapp import util
 from google.appengine.ext.webapp import template
 from django.template import TemplateDoesNotExist
 
-class opts:
-  cache_time        = 1
-
 class Article:
   def __init__(self, article_id):
-    self.id = article_id
-    raw = self.load()
-    raw = raw.split("\n\n", 1)
-    self.url = re.sub('-', '/', article_id, 3)
-    self.meta = yaml.load(raw[0])
-    self.summary = markdown.markdown(raw[1].split('~', 1)[0])
-    self.body = markdown.markdown(raw[1])
-
+    self.id       = re.sub('.md', '', article_id)
+    self.id       = re.sub('.txt', '', article_id)
+    self.raw      = self.load()
+    if self.raw is not None:
+      self.raw      = self.raw.split("\n\n", 1)
+      self.url      = config.site_url+re.sub('-', '/', self.id, 3)
+      self.meta     = yaml.load(self.raw[0])
+      self.summary  = markdown.markdown(self.raw[1].split('~', 1)[0])
+      self.body     = markdown.markdown(self.raw[1])
+      self.body     = re.sub('~', '', self.body)
+    
   def load(self):
     article = memcache.get(self.id, 'article_')
-    
     if article is None:
       try:
-        static_article_path = os.path.join(os.path.dirname(__file__), 'articles/'+self.id)
+        static_article_path = path('articles/'+self.id+config.article_file_type)
         article = file(static_article_path, 'rb').read()
-        memcache.set(self.id, article, opts.cache_time, 0, 'article_')
+        memcache.set(self.id, article, config.cache_time, 0, 'article_')
       except IOError: return
-    
     return article
-    
+
 class Articles:
   def all(self):
+    archives = Archives().all("", config.articles_per_page)
     articles = []
-    article_dir = os.path.join(os.path.dirname(__file__), 'articles/')
-    for root, dirs, files in os.walk(article_dir, topdown=False):
-      for name in files:
-        article = Article(name)
+    for archive in archives:      
+      article = Article(archive['name'])
+      if article.raw is not None:
         articles.append(article)
     return articles
-  def filter(self, filters=None):
-    return self.all()
-    
+
+class Archives:
+  def all(self, filter="", limit=25, offset=0):
+    index_from  = (limit*offset) 
+    index_to    = ((limit*offset)+limit)
+    archives = memcache.get('archives_'+filter+"_"+str(index_from)+"_"+str(index_to))
+    if archives == None:
+      archives    = []
+      article_dir = path('articles/')
+      for root, dirs, files in os.walk(article_dir):
+        count = 0
+        for name in files:
+          if filter in name and name.index('.') > 0:
+            if count >= index_from and count < index_to:
+              name    = re.sub('.md', '', name)
+              name    = re.sub('.txt', '', name)
+              url     = '/'+re.sub('-', '/', name, 3)
+              archive = {
+                'name' : name,
+                'url'  : url
+              }
+              archives.append(archive)
+            count += 1
+      archives = sorted(archives, key=lambda archive:archive['name'])[::-1]
+      memcache.set('archives_'+filter+"_"+str(index_from)+"_"+str(index_to), archives, config.cache_time)
+    return archives
+
 class Index(webapp.RequestHandler):
   def get(self):
     articles = Articles().all()
-    
-    template_vars = {
-      'articles' : articles
-    }
-    
-    path = os.path.join(os.path.dirname(__file__), 'templates/pages/index.html')
-    self.response.out.write(template.render(path, template_vars))
-    
+    template_vars = { 'articles' : articles }
+    self.response.out.write(template.render(path('templates/pages/index.html'), template_vars))
+
 class ViewArticle(webapp.RequestHandler):
   def get(self, year, month, day, title):
-    
-    year        = cgi.escape(year)
-    month       = cgi.escape(month)
-    day         = cgi.escape(day)
-    title       = cgi.escape(title)
-    article_id  = year+'-'+month+'-'+day+'-'+title
-    article     = Article(article_id)
-      
-    template_vars = { 'article' : article }
-    
-    path = os.path.join(os.path.dirname(__file__), 'templates/pages/article.html')
-    self.response.out.write(template.render(path, template_vars))
+    article_id    = cgi.escape(year)+'-'+cgi.escape(month)+'-'+cgi.escape(day)+'-'+cgi.escape(title)
+    article       = Article(article_id)
+    if article.raw is not None:
+      template_vars = { 'article' : article }
+      self.response.out.write(template.render(path('templates/pages/article.html'), template_vars))
+    else:
+      self.response.out.write(template.render(path('templates/pages/404.html'), {}))
 
 class ViewArchives(webapp.RequestHandler):
   def get(self, year=None, month=None, day=None):
-    
-    articles = Articles().filter()
+    if year == None:
+      archives = Archives().all()
+    else:
+      filter = cgi.escape(year)
+      if month is not None: 
+        filter += '-'+cgi.escape(month)
+        if day is not None: 
+          filter += '-'+cgi.escape(day)
+      archives = Archives().all(filter)
     template_vars = {
-      'year'  : year,
-      'month' : month,
-      'day'   : day,
-      'articles' : articles
+      'year'      : year,
+      'month'     : month,
+      'day'       : day,
+      'archives'  : archives
     }
-    path = os.path.join(os.path.dirname(__file__), 'templates/pages/archives.html')
-    self.response.out.write(template.render(path, template_vars))
+    self.response.out.write(template.render(path('templates/pages/archives.html'), template_vars))
 
 class ViewTag(webapp.RequestHandler):
   def get(self, tag):
-    
     template_vars = { 'tag' : tag }
-    
-    path = os.path.join(os.path.dirname(__file__), 'templates/pages/tag.html')
-    self.response.out.write(template.render(path, template_vars))
-
-class RSS(webapp.RequestHandler):
-  def get(self):
-    path = os.path.join(os.path.dirname(__file__), 'templates/rss.feed')
-    self.response.out.write(template.render(path, {}))
-
-class Sitemap(webapp.RequestHandler):
-  def get(self):
-    articles = Articles().all()
-    
-    template_vars = {
-      'articles' : articles
-    }
-    
-    path = os.path.join(os.path.dirname(__file__), 'templates/sitemap.xml')
-    self.response.out.write(template.render(path, template_vars))
+    self.response.out.write(template.render(path('templates/pages/tag.html'), template_vars))
 
 class PageHandler(webapp.RequestHandler):
   def get(self, page):
     page = cgi.escape(page.replace('/', ''))
-    try:
-      path = os.path.join(os.path.dirname(__file__), 'templates/pages/'+page+'.html')
-      self.response.out.write(template.render(path, {}))
-    except TemplateDoesNotExist:
-      path = os.path.join(os.path.dirname(__file__), 'templates/pages/404.html')
-      self.response.out.write(template.render(path, {}))
+    if page == "rss" or page == "sitemap":
+      file_type     = ('.xml','.feed')[page == 'rss']
+      template_vars = { 
+        'title'       : config.site_name,
+        'description' : config.site_description,
+        'site_url'    : config.site_url,
+        'articles'    : Articles().all() 
+      }
+      self.response.out.write(template.render(path('templates/'+page+file_type), template_vars))
+    else:
+      try:
+        self.response.out.write(template.render(path('templates/pages/'+page+'.html'), {}))
+      except TemplateDoesNotExist:
+        self.response.out.write(template.render(path('templates/pages/404.html'), {}))
 
+def path(path):
+  return os.path.join(os.path.dirname(__file__), path)
 
-      
+class Admin(webapp.RequestHandler):
+  def get(self, action):
+    if action == "flush":
+      self.response.out.write('Flushing...')
+      memcache.flush_all()
+      self.redirect('/')
+    else:
+      self.error(404)
+
 def main():
   application = webapp.WSGIApplication(
   [
     ('/', Index),
     ('/(\d{4})/(\d{2})/(\d{2})/([^/]+)/?', ViewArticle),
     ('/archives/?([\d]{4})?/?([\d]{2})?/?([\d]{2})?/?', ViewArchives),
-    ('/tag/([^/]+)', ViewTag),
-    ('/rss', RSS),
-    ('/sitemap', Sitemap),
+    ('/tag/([^/]+)/?', ViewTag),
+    ('/admin/([^/]+)/?', Admin),
     ('/(.*)/?', PageHandler)
   ], 
   debug=True)
