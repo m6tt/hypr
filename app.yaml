@@ -50,9 +50,10 @@ handlers:
 
 - url: /downloads
   static_dir: static/downloads
-    
+
+- url: admin/.*
+  script: main.py
+  login: admin
+
 - url: .*
   script: main.py
-
-error_handlers:
-  - file: templates/error.html
