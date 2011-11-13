@@ -35,9 +35,8 @@ class Article:
       self.raw      = self.raw.split("\n\n", 1)
       self.url      = config.site_url+re.sub('-', '/', self.id, 3)
       self.meta     = yaml.load(self.raw[0])
-      self.summary  = markdown.markdown(self.raw[1].split('~', 1)[0])
+      self.summary  = markdown.markdown(self.raw[1].split('<!-- ~ -->', 1)[0])
       self.body     = markdown.markdown(self.raw[1])
-      self.body     = re.sub('~', '', self.body)
     
   def load(self):
     article = memcache.get(self.id, 'article_')
